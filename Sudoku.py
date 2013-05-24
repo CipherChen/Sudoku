@@ -5,11 +5,14 @@ Some Sudoku would have multiple resolutions, but we'll just figure out one of th
 
 You may be interested in the process how this program solve these, then make sure that the variable DEBUG == True.
 '''
+
 '''
 TODO:
- - Check the 3*3 cuber.
+ - [Done] Check the 3*3 cuber.
+ - Do more complete check() in Cuber9.check()
  - Consider the line/row/Cuber3 which only has one EmptyValue first.
  - Consider the line/row/Cuber3 which the last filled pos is in. 
+ - Consider cases which have more than one solution. 
 '''
 
 import random
@@ -27,6 +30,7 @@ class Cuber(object):
 	lineno/rowno should start with 0.
 	'''
 	def __init__(self, values):
+		# THe inner data stands for the puzzle.
 		self.values = values
 		
 	def getLine(self, lineno):
@@ -140,13 +144,20 @@ class Cuber9(Cuber):
 			i += 3
 		return _SubCubers
 	
+	def getPosSubCuber(self, pos):
+		i, j = pos
+		return self.getSubCubers()[(i/3, j/3)]
+		
+	
 	def setValueAndCheck(self, pos, value):
 		# A roll-back operation
 		if value == EmptyValue:
 			self.setValue(pos, value)
 		else:
 			lineno, rowno = pos
-			if (value in self.getLine(lineno)) or (value in self.getRow(rowno)):
+			if (value in self.getLine(lineno)) \
+			or (value in self.getRow(rowno)) \
+			or self.getPosSubCuber(pos).inCuber3(value):
 				return False
 			self.setValue(pos, value)
 		return True
@@ -163,6 +174,7 @@ class Cuber9(Cuber):
 	def check(self):
 		'''
 		Check the whole Cuber9 to see if it' ok.
+		Do something more.
 		'''
 		_alllines = []
 		for line in self.values:
@@ -174,19 +186,6 @@ class Cuber9(Cuber):
 			if _alllines.count(i) != 9:
 				return False
 		return True
-
-
-def test():
-	print cuber9
-	for line in cuber9.lines():
-		print line
-	print 
-	print cuber9
-	for row in cuber9.rows():
-		print row
-	print
-	print cuber9
-	print cuber9.getAllEmptyPos()
 
 # Used to get the subset of each line/row/Cuber3
 _Values = set(range(0, 10))
@@ -226,53 +225,77 @@ def Boom(case):
 		# !!! Since the whole subset doesn't fit this line, the upper level must be wrong.
  		return None
 
-a = [[0, 0, 3, 0, 8, 0, 0, 9, 0], 
-	 [8, 0, 0, 0, 0, 0, 6, 0, 1], 
-	 [0, 0, 4, 0, 0, 9, 2, 0, 0], 
-	 [0, 4, 0, 0, 6, 7, 9, 0, 0], 
-	 [0, 0, 8, 3, 0, 2, 7, 0, 0], 
-	 [0, 0, 7, 9, 5, 0, 0, 2, 0], 
-	 [0, 0, 6, 5, 0, 0, 3, 0, 0],
-	 [4, 0, 2, 0, 0, 0, 0, 0, 7], 
-	 [0, 8, 0, 0, 7, 0, 4, 0, 0], 
-	]
-
-diabolical = [[8, 0, 7, 0, 0, 0, 0, 0, 0], 
-			  [3, 0, 0, 5, 0, 0, 0, 0, 0], 
-			  [0, 0, 9, 0, 8, 0, 0, 5, 0], 
-			  [1, 0, 0, 0, 5, 4, 9, 0, 6], 
-			  [0, 0, 4, 0, 1, 0, 3, 0, 0], 
-			  [9, 0, 3, 6, 2, 0, 0, 0, 1], 
-			  [0, 9, 0, 0, 6, 0, 2, 0, 0], 
-			  [0, 0, 0, 0, 0, 8, 0, 0, 9], 
-			  [0, 0, 0, 0, 0, 0, 6, 0, 8], 
-			 ]
 
 
 def main():
 	
 	_testcases = (
-				  ([[0, 0, 0, 3, 0, 5, 0, 0, 4],
-			        [3, 1, 0, 4, 0, 0, 0, 2, 0], 
-			        [9, 6, 4, 1, 7, 2, 0, 0, 0], 
-			        [0, 0, 0, 5, 6, 1, 2, 3, 9], 
-			        [0, 3, 6, 0, 0, 0, 4, 8, 0], 
-			        [5, 2, 9, 8, 3, 4, 0, 0, 0], 
-			        [0, 0, 0, 9, 1, 3, 6, 7, 2], 
-			        [0, 7, 0, 0, 0, 8, 0, 9, 3], 
-			        [2, 0, 0, 6, 0, 7, 0, 0, 0],
-			       ], 
-				   [[7, 8, 2, 3, 9, 5, 1, 6, 4], 
-				    [3, 1, 5, 4, 8, 6, 9, 2, 7], 
-				    [9, 6, 4, 1, 7, 2, 3, 5, 8], 
-				    [8, 4, 7, 5, 6, 1, 2, 3, 9], 
-				    [1, 3, 6, 7, 2, 9, 4, 8, 5], 
-				    [5, 2, 9, 8, 3, 4, 7, 1, 6], 
-				    [4, 5, 8, 9, 1, 3, 6, 7, 2], 
-				    [6, 7, 1, 2, 4, 8, 5, 9, 3], 
-				    [2, 9, 3, 6, 5, 7, 8, 4, 1], 
-				   ]), 
-				 )
+				      # Easy
+                      ([[0, 0, 0, 3, 0, 5, 0, 0, 4],
+                        [3, 1, 0, 4, 0, 0, 0, 2, 0], 
+                        [9, 6, 4, 1, 7, 2, 0, 0, 0], 
+                        [0, 0, 0, 5, 6, 1, 2, 3, 9], 
+                        [0, 3, 6, 0, 0, 0, 4, 8, 0], 
+                        [5, 2, 9, 8, 3, 4, 0, 0, 0], 
+                        [0, 0, 0, 9, 1, 3, 6, 7, 2], 
+                        [0, 7, 0, 0, 0, 8, 0, 9, 3], 
+                        [2, 0, 0, 6, 0, 7, 0, 0, 0],
+                       ], 
+                       [[7, 8, 2, 3, 9, 5, 1, 6, 4], 
+                        [3, 1, 5, 4, 8, 6, 9, 2, 7], 
+                        [9, 6, 4, 1, 7, 2, 3, 5, 8], 
+                        [8, 4, 7, 5, 6, 1, 2, 3, 9], 
+                        [1, 3, 6, 7, 2, 9, 4, 8, 5], 
+                        [5, 2, 9, 8, 3, 4, 7, 1, 6], 
+                        [4, 5, 8, 9, 1, 3, 6, 7, 2], 
+                        [6, 7, 1, 2, 4, 8, 5, 9, 3], 
+                        [2, 9, 3, 6, 5, 7, 8, 4, 1], 
+                       ]), 
+
+		              # Hard
+                      ([[0, 0, 3, 0, 8, 0, 0, 9, 0], 
+                        [8, 0, 0, 0, 0, 0, 6, 0, 1], 
+                        [0, 0, 4, 0, 0, 9, 2, 0, 0], 
+                        [0, 4, 0, 0, 6, 7, 9, 0, 0], 
+                        [0, 0, 8, 3, 0, 2, 7, 0, 0], 
+                        [0, 0, 7, 9, 5, 0, 0, 2, 0], 
+                        [0, 0, 6, 5, 0, 0, 3, 0, 0],
+                        [4, 0, 2, 0, 0, 0, 0, 0, 7], 
+                        [0, 8, 0, 0, 7, 0, 4, 0, 0], 
+                        ], 
+                       [[1, 2, 3, 7, 8, 6, 5, 9, 4], 
+                        [8, 7, 9, 4, 2, 5, 6, 3, 1], 
+                        [6, 5, 4, 1, 3, 9, 2, 7, 8], 
+                        [2, 4, 5, 8, 6, 7, 9, 1, 3], 
+                        [9, 6, 8, 3, 1, 2, 7, 4, 5], 
+                        [3, 1, 7, 9, 5, 4, 8, 2, 6], 
+                        [7, 9, 6, 5, 4, 1, 3, 8, 2], 
+                        [4, 3, 2, 6, 9, 8, 1, 5, 7], 
+                        [5, 8, 1, 2, 7, 3, 4, 6, 9], 
+                      ]), 
+
+                      # Diabolical
+                      ([[8, 0, 7, 0, 0, 0, 0, 0, 0], 
+                        [3, 0, 0, 5, 0, 0, 0, 0, 0], 
+                        [0, 0, 9, 0, 8, 0, 0, 5, 0], 
+                        [1, 0, 0, 0, 5, 4, 9, 0, 6], 
+                        [0, 0, 4, 0, 1, 0, 3, 0, 0], 
+                        [9, 0, 3, 6, 2, 0, 0, 0, 1], 
+                        [0, 9, 0, 0, 6, 0, 2, 0, 0], 
+                        [0, 0, 0, 0, 0, 8, 0, 0, 9], 
+                        [0, 0, 0, 0, 0, 0, 6, 0, 8], 
+                       ], 
+                       [[8, 5, 7, 9, 4, 3, 1, 6, 2], 
+                        [3, 1, 6, 5, 7, 2, 8, 9, 4], 
+                        [2, 4, 9, 1, 8, 6, 7, 5, 3], 
+                        [1, 7, 2, 3, 5, 4, 9, 8, 6], 
+                        [5, 6, 4, 8, 1, 9, 3, 2, 7], 
+                        [9, 8, 3, 6, 2, 7, 5, 4, 1], 
+                        [7, 9, 8, 4, 6, 1, 2, 3, 5], 
+                        [6, 2, 5, 7, 3, 8, 4, 1, 9], 
+                        [4, 3, 1, 2, 9, 5, 6, 7, 8], 
+                       ]), 
+                     )
 	
 	# x = Cuber9(copy.deepcopy(testcase_r))
 	# for i in range(0, 20):
@@ -281,6 +304,9 @@ def main():
 	# 	x.setValue((l, r), EmptyValue)
 	
 	for (p, s) in _testcases:
+		print 
+		global spac 
+		spac = [' ']
 		case = Cuber9(p)
 		case_solution = Cuber9(s)
 		
