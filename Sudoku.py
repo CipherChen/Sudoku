@@ -20,7 +20,7 @@ import copy
 import time
 
 # For DEBUG
-DEBUG = True
+DEBUG = False
 EmptyValue = 0
 spac = [' ']
 
@@ -44,18 +44,26 @@ class Cuber(object):
 		return self.values[lineno][rowno]
 	
 	def setValue(self, pos, value):
-		global spac
-		if value == EmptyValue:
-			spac.pop()
 		lineno, rowno = pos
-		print ''.join(spac), pos, '->', value, 
-		if value == EmptyValue:
-			print '...'
-		else:
-			print
+		
+		if DEBUG:
+			global spac
+			if value == EmptyValue:
+				spac.pop()
+		
+			print ''.join(spac), pos, '->', value, 
+		
+			# Roll back
+			if value == EmptyValue:
+				print '...'
+			else:
+				print
+
 		self.values[lineno][rowno] = value
-		if value != EmptyValue:
-			spac.extend(' ')
+		
+		if DEBUG:
+			if value != EmptyValue:
+				spac.extend(' ')
 	
 	def lines(self):
 		# Iterator over all lines
@@ -304,9 +312,10 @@ def main():
 	# 	x.setValue((l, r), EmptyValue)
 	
 	for (p, s) in _testcases:
-		print 
-		global spac 
-		spac = [' ']
+		print '*' * 80
+		if DEBUG:
+			global spac 
+			spac = [' ']
 		case = Cuber9(p)
 		case_solution = Cuber9(s)
 		
