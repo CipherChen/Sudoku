@@ -2,74 +2,22 @@
 '''
 This is a simple resolution of given Sudoku.
 Some Sudoku would have multiple resolutions, but we'll just figure out one of them.
+
+You may be interested in the process how this program solve these, then make sure that the variable DEBUG == True.
 '''
 '''
 TODO:
-
+ - Check the 3*3 cuber.
+ - Consider the line/row/Cuber3 which only has one EmptyValue first.
+ - Consider the line/row/Cuber3 which the last filled pos is in. 
 '''
 
 import random
 import copy
 import time
 
-_Values = set(range(1, 10))
-
-testcase3 = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
-
-testcase = [[0, 0, 0, 3, 0, 5, 0, 0, 4],
-		    [3, 1, 0, 4, 0, 0, 0, 2, 0], 
-		    [9, 6, 4, 1, 7, 2, 0, 0, 0], 
-		    [0, 0, 0, 5, 6, 1, 2, 3, 9], 
-		    [0, 3, 6, 0, 0, 0, 4, 8, 0], 
-		    [5, 2, 9, 8, 3, 4, 0, 0, 0], 
-		    [0, 0, 0, 9, 1, 3, 6, 7, 2], 
-		    [0, 7, 0, 0, 0, 8, 0, 9, 3], 
-		    [2, 0, 0, 6, 0, 7, 0, 0, 0],
-		   ]
-
-testcase_r = [[7, 8, 2, 3, 9, 5, 1, 6, 4], 
-			  [3, 1, 5, 4, 8, 6, 9, 2, 7], 
-			  [9, 6, 4, 1, 7, 2, 3, 5, 8], 
-			  [8, 4, 7, 5, 6, 1, 2, 3, 9], 
-			  [1, 3, 6, 7, 2, 9, 4, 8, 5], 
-			  [5, 2, 9, 8, 3, 4, 7, 1, 6], 
-			  [4, 5, 8, 9, 1, 3, 6, 7, 2], 
-			  [6, 7, 1, 2, 4, 8, 5, 9, 3], 
-			  [2, 9, 3, 6, 5, 7, 8, 4, 1], 
-			 ]
-
-a = [[0, 0, 3, 0, 8, 0, 0, 9, 0], 
-	 [8, 0, 0, 0, 0, 0, 6, 0, 1], 
-	 [0, 0, 4, 0, 0, 9, 2, 0, 0], 
-	 [0, 4, 0, 0, 6, 7, 9, 0, 0], 
-	 [0, 0, 8, 3, 0, 2, 7, 0, 0], 
-	 [0, 0, 7, 9, 5, 0, 0, 2, 0], 
-	 [0, 0, 6, 5, 0, 0, 3, 0, 0],
-	 [4, 0, 2, 0, 0, 0, 0, 0, 7], 
-	 [0, 8, 0, 0, 7, 0, 4, 0, 0], 
-	]
-
-# At first, I was trying to define values of types"Given/Assumed"
-# Then I realize that Backbrace would be better.
-class Value(object):
-	def __init__(self, value, type):
-		self.value = value
-		self.type = type
-		
-	def getRow(self):
-		pass
-	
-	def getLine(self):
-		pass
-	
-	def getsubRow(self):
-		pass
-	
-	def getsubLine(self):
-		pass
-
-
-# For debug indentation
+# For DEBUG
+DEBUG = True
 EmptyValue = 0
 spac = [' ']
 
@@ -240,20 +188,24 @@ def test():
 	print cuber9
 	print cuber9.getAllEmptyPos()
 
+# Used to get the subset of each line/row/Cuber3
 _Values = set(range(0, 10))
 
-# 回溯，问题不难，定义好每个对象的接口
-# 两层循环，貌似不够？
 def Boom(case):
-	# print case
+	'''
+	The main algorithm of this program.
+	I use recursion function to implement the backtrace.
+	When it finds that the current assumed value has conflict with others,
+	go back to the last assumed pos to try another possible value.
+	'''
 	leftEmpty = case.getAllEmptyPos()
-	# print 'leftEmpty: ', leftEmpty
-	# All space filled, so we give it a check.
+	
+	# All empty places filled, so we give it a check.
 	if not leftEmpty:
-		print 'All filled, check now'
 		if case.check():
 			return case
-	# Iterate over each pos
+	
+	# Iterate over each empty pos
 	for pos in leftEmpty:
 		l, r = pos
 		linel = case.getLine(l)
@@ -265,34 +217,86 @@ def Boom(case):
 		# Iterate over each valid values
 		for each in subset:
 			if case.setValueAndCheck(pos, each):
-				# subset.remove(each)
+				# Fill in one value, so pass it to next level.
  				if Boom(case):
  					return case
  				else:
  					# Roll back
  					case.setValueAndCheck(pos, EmptyValue)
- 					# subset.add(each)
 		# !!! Since the whole subset doesn't fit this line, the upper level must be wrong.
  		return None
 
-# x = Cuber9(copy.deepcopy(testcase_r))
-# for i in range(0, 20):
-# 	l = random.randrange(0, 9)
-# 	r = random.randrange(0, 9)
-# 	x.setValue((l, r), EmptyValue)
+a = [[0, 0, 3, 0, 8, 0, 0, 9, 0], 
+	 [8, 0, 0, 0, 0, 0, 6, 0, 1], 
+	 [0, 0, 4, 0, 0, 9, 2, 0, 0], 
+	 [0, 4, 0, 0, 6, 7, 9, 0, 0], 
+	 [0, 0, 8, 3, 0, 2, 7, 0, 0], 
+	 [0, 0, 7, 9, 5, 0, 0, 2, 0], 
+	 [0, 0, 6, 5, 0, 0, 3, 0, 0],
+	 [4, 0, 2, 0, 0, 0, 0, 0, 7], 
+	 [0, 8, 0, 0, 7, 0, 4, 0, 0], 
+	]
 
-x = Cuber9(testcase)
-print x
-now = time.time()
-Boom(x)
-print 'Used: ', time.time() - now
-print x == Cuber9(testcase_r)
-print x.check()
-print x
+diabolical = [[8, 0, 7, 0, 0, 0, 0, 0, 0], 
+			  [3, 0, 0, 5, 0, 0, 0, 0, 0], 
+			  [0, 0, 9, 0, 8, 0, 0, 5, 0], 
+			  [1, 0, 0, 0, 5, 4, 9, 0, 6], 
+			  [0, 0, 4, 0, 1, 0, 3, 0, 0], 
+			  [9, 0, 3, 6, 2, 0, 0, 0, 1], 
+			  [0, 9, 0, 0, 6, 0, 2, 0, 0], 
+			  [0, 0, 0, 0, 0, 8, 0, 0, 9], 
+			  [0, 0, 0, 0, 0, 0, 6, 0, 8], 
+			 ]
 
+
+def main():
 	
+	_testcases = (
+				  ([[0, 0, 0, 3, 0, 5, 0, 0, 4],
+			        [3, 1, 0, 4, 0, 0, 0, 2, 0], 
+			        [9, 6, 4, 1, 7, 2, 0, 0, 0], 
+			        [0, 0, 0, 5, 6, 1, 2, 3, 9], 
+			        [0, 3, 6, 0, 0, 0, 4, 8, 0], 
+			        [5, 2, 9, 8, 3, 4, 0, 0, 0], 
+			        [0, 0, 0, 9, 1, 3, 6, 7, 2], 
+			        [0, 7, 0, 0, 0, 8, 0, 9, 3], 
+			        [2, 0, 0, 6, 0, 7, 0, 0, 0],
+			       ], 
+				   [[7, 8, 2, 3, 9, 5, 1, 6, 4], 
+				    [3, 1, 5, 4, 8, 6, 9, 2, 7], 
+				    [9, 6, 4, 1, 7, 2, 3, 5, 8], 
+				    [8, 4, 7, 5, 6, 1, 2, 3, 9], 
+				    [1, 3, 6, 7, 2, 9, 4, 8, 5], 
+				    [5, 2, 9, 8, 3, 4, 7, 1, 6], 
+				    [4, 5, 8, 9, 1, 3, 6, 7, 2], 
+				    [6, 7, 1, 2, 4, 8, 5, 9, 3], 
+				    [2, 9, 3, 6, 5, 7, 8, 4, 1], 
+				   ]), 
+				 )
+	
+	# x = Cuber9(copy.deepcopy(testcase_r))
+	# for i in range(0, 20):
+	# 	l = random.randrange(0, 9)
+	# 	r = random.randrange(0, 9)
+	# 	x.setValue((l, r), EmptyValue)
+	
+	for (p, s) in _testcases:
+		case = Cuber9(p)
+		case_solution = Cuber9(s)
+		
+		start = time.time()
+		Boom(case)
+		end = time.time()
+		
+		if case == case_solution:
+			print 'Case: '
+			print case
+			print 'Solution: '
+			print case_solution
+			print 'Congratulations, seconds elapsed: ', end - start
+		else:
+			print 'Case FAILED: '
+			print case
 
-# cuber9 = Cuber9(testcase)
-# Boom(cuber9)
-# print cuber9
-# print cuber9.check()
+if __name__ == '__main__':
+	main()
